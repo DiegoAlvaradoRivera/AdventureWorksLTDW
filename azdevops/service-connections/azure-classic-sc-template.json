@@ -1,0 +1,28 @@
+{
+  "data": {
+    "environment": "AzureCloud", 
+    "subscriptionId": "", 
+    "subscriptionName": ""
+  },
+  "name": "",
+  "type": "azure",
+  "url": "https://management.core.windows.net/",
+  "authorization": {
+    "parameters": {
+      "username": "",
+      "password": ""
+    },
+    "scheme": "UsernamePassword"
+  },
+  "isShared": false,
+  "isReady": true,
+  "serviceEndpointProjectReferences": [
+    {
+      "projectReference": {
+        "id": "",
+        "name": ""
+      },
+      "name": ""
+    }
+  ]
+}

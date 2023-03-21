@@ -1,0 +1,9 @@
+{
+    "instance_pool_name": "testing-pool",
+    
+    "max_capacity": 1,
+    "min_idle_instances": 0,
+    
+    "node_type_id": "Standard_D3_v2",
+    "preloaded_spark_versions": "11.3.x-scala2.12"
+}

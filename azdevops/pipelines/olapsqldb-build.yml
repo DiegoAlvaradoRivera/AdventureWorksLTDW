@@ -1,0 +1,50 @@
+
+trigger: none
+
+pool:
+  vmImage: windows-latest
+
+variables: 
+- group: Variables
+
+steps: 
+
+- task: AzureKeyVault@2
+  inputs:
+    azureSubscription: MyARMServiceConnection
+    KeyVaultName: $(RG_KEY_VAULT)
+    SecretsFilter: 'AdvWorksOLAPServer,AdvWorksOLAPDatabase,AdvWorksOLAPUser,AdvWorksOLAPPassword'
+    RunAsPreJob: true 
+  
+- powershell: |
+    
+    $projectLocation = "./sql-database/projects/AdventureWorksDW/AdventureWorksDWSQLDatabase.sqlproj"
+    
+    dotnet build $projectLocation /p:NetCoreBuild=true
+  
+  displayName: Build the database project
+
+- powershell: | 
+    
+    dotnet tool install -g microsoft.sqlpackage
+
+  displayName: Install the sql package
+
+- powershell: |
+
+    $dacpacLoc = "./sql-database/projects/AdventureWorksDW/bin/Debug/AdventureWorksDWSQLDatabase.dacpac"
+
+    sqlpackage /Action:Publish `
+      /TargetServerName:$env:AdvWorksOLAPServer `
+      /TargetDatabaseName:$env:AdvWorksOLAPDatabase `
+      /TargetUser:$env:AdvWorksOLAPUser `
+      /TargetPassword:$env:AdvWorksOLAPPassword `
+      /TargetEncryptConnection:False `
+      /SourceFile:$dacpacLoc
+  
+  displayName: Publish the database project
+  env: 
+    AdvWorksOLAPServer:   $(AdvWorksOLAPServer)
+    AdvWorksOLAPDatabase: $(AdvWorksOLAPDatabase)
+    AdvWorksOLAPUser:     $(AdvWorksOLAPUser)
+    AdvWorksOLAPPassword: $(AdvWorksOLAPPassword)

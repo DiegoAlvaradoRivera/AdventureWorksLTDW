@@ -1,0 +1,48 @@
+{
+    "name": "<job_name>", 
+    "format": "MULTI_TASK", 
+
+    "tasks": [
+        {
+            "task_key": "<first_task_name>",
+            "job_cluster_key": "Job_cluster",
+
+            "spark_jar_task": {
+                "main_class_name": "<first_task_main_class>", 
+                "parameters": []
+            },
+
+            "libraries": [
+                    {"jar": "<first_task_jar>"}
+            ]
+        }
+    ],
+
+    "job_clusters": [
+        {
+            "job_cluster_key": "Job_cluster",
+            "new_cluster": {
+                "cluster_name": "",
+                "spark_version": "11.3.x-scala2.12",
+                "spark_conf": {
+
+                    "spark.master": "local[*, 4]",
+                    "spark.databricks.delta.preview.enabled": "true",
+
+                    "AdvWorksOLTPConnString": "{{secrets/advworkslt/AdvWorksOLTPConnString}}", 
+                    "AdvWorksOLAPConnString": "{{secrets/advworkslt/AdvWorksOLAPConnString}}"
+
+                },
+                "azure_attributes": {},
+                "spark_env_vars": {
+                    "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+                },
+                "instance_pool_id": "<cluster_worker_instance_pool_id>",
+                "driver_instance_pool_id": "<cluster_driver_instance_pool_id>",
+                "data_security_mode": "LEGACY_SINGLE_USER_STANDARD",
+                "runtime_engine": "STANDARD",
+                "num_workers": 0
+            }
+        }
+    ]
+}

@@ -1,0 +1,77 @@
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables: 
+- group: Variables
+
+steps: 
+
+- task: AzureKeyVault@2
+  inputs:
+    azureSubscription: MyARMServiceConnection
+    KeyVaultName: $(RG_KEY_VAULT)
+    SecretsFilter: 'DATABRICKS-HOST,DATABRICKS-PAT'
+    RunAsPreJob: true 
+
+- powershell: |
+    Set-Location ./databricks/libraries/advworksdw
+    sbt package
+  displayName: Run SBT package
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: 3.8
+  displayName: 'Use Python 3.8'
+
+- powershell:  | 
+    pip install databricks-cli
+  displayName: 'Install the Dbs CLI'
+
+- powershell: | 
+
+    # import databricks utility functions
+    . ./databricks/utilities.ps1
+
+    # check the connection to databricks
+    Assert-DatabricksConnection
+
+    # upload the previously created JAR to DBFS
+    $jar = (get-childitem ./databricks/libraries/advworksdw/target/scala-2.12/*.jar)[0]  
+    $sourceFile = $jar.FullName 
+    $targetFile = "dbfs:/advworksdw/BuildID=$env:BUILD_BUILDID/" + $jar.Name
+    databricks fs cp $sourceFile $targetFile --overwrite
+  
+    # retrieve the instance pool id
+    $instancePoolId = Get-DatabricksInstancePoolId "testing-pool"
+
+    # create the advworksdw_InitialLoad job
+    $InitialLoadParams = @{
+      "job_name"                        = "AdvWorksDW_InitialLoad"
+      "first_task_name"                 = "InitialLoad"
+      "first_task_jar"                  = $targetFile
+      "first_task_main_class"           = "org.advworkslh.jobs.InitialLoad"
+      "cluster_worker_instance_pool_id" = $instancePoolId
+      "cluster_driver_instance_pool_id" = $instancePoolId
+    }
+    Replace-Params $InitialLoadParams ./databricks/jobs/job-template.json > InitialLoadDef.json
+    Create-DatabricksJob -name $InitialLoadParams.job_name -definition InitialLoadDef.json 
+
+    # create the advworksdw_DeltaLoad job
+    $DeltaLoadParams = @{
+      "job_name"                        = "AdvWorksDW_DeltaLoad"
+      "first_task_name"                 = "DeltaLoad"
+      "first_task_jar"                  = $targetFile
+      "first_task_main_class"           = "org.advworkslh.jobs.DeltaLoad"
+      "cluster_worker_instance_pool_id" = $instancePoolId
+      "cluster_driver_instance_pool_id" = $instancePoolId
+    }
+    Replace-Params $DeltaLoadParams ./databricks/jobs/job-template.json > DeltaLoadDef.json
+    Create-DatabricksJob -name $DeltaLoadParams.job_name -definition DeltaLoadDef.json 
+
+  displayName: Create or update the Databricks jobs
+  env: 
+    DATABRICKS_HOST:  $(DATABRICKS-HOST)
+    DATABRICKS_TOKEN: $(DATABRICKS-PAT)

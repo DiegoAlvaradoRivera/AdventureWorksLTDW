@@ -1,0 +1,30 @@
+{
+    "data": {
+      "environment": "AzureCloud", 
+      "subscriptionId": "", 
+      "subscriptionName": ""
+    },
+    "name": "",
+    "type": "azurerm",
+    "url": "https://management.azure.com/",
+    "authorization": {
+    "parameters": {
+        "tenantid": "",
+        "serviceprincipalid": "",
+        "authenticationType": "spnKey",
+        "serviceprincipalkey": ""
+        },
+      "scheme": "ServicePrincipal"
+    },
+    "isShared": false,
+    "isReady": true,
+    "serviceEndpointProjectReferences": [
+      {
+        "projectReference": {
+          "id": "",
+          "name": ""
+        },
+        "name": ""
+      }
+    ]
+  }
